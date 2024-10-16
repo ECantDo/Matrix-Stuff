@@ -1,0 +1,492 @@
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Arrays;
+
+public class Matrix {
+    private final BigDecimal[][] matrix;
+
+    private static final int decimalCount = 32;
+    private static final RoundingMode roundingMode = RoundingMode.HALF_UP;
+
+    //================================================================================================================//
+    //                                              Constructors
+    //================================================================================================================//
+    public Matrix(double[][] matrix) {
+        this.matrix = new BigDecimal[matrix.length][];
+        int rowLength = matrix[0].length;
+        for (int i = 0; i < matrix.length; i++) {
+            if (matrix[i].length != rowLength) {
+                throw new IllegalArgumentException("All rows must have the same length");
+            }
+            this.matrix[i] = new BigDecimal[matrix[i].length];
+            for (int j = 0; j < matrix[i].length; j++) {
+                this.matrix[i][j] = BigDecimal.valueOf(matrix[i][j]);
+            }
+        }
+    }
+
+    public Matrix(BigDecimal[][] matrix) {
+        this.matrix = new BigDecimal[matrix.length][];
+        int rowLength = matrix[0].length;
+        for (int i = 0; i < matrix.length; i++) {
+            if (matrix[i].length != rowLength) {
+                throw new IllegalArgumentException("All rows must have the same length");
+            }
+            this.matrix[i] = new BigDecimal[matrix[i].length];
+            System.arraycopy(matrix[i], 0, this.matrix[i], 0, matrix[i].length);
+        }
+    }
+
+    /**
+     * Creates an empty matrix with the given rows and columns
+     *
+     * @param rows    The number of rows
+     * @param columns The number of columns
+     */
+    public Matrix(int rows, int columns) {
+        this.matrix = new BigDecimal[rows][columns];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                this.matrix[i][j] = new BigDecimal(0);
+            }
+        }
+    }
+
+    /**
+     * Creates a matrix filled with the given value
+     *
+     * @param rows    The number of rows
+     * @param columns The number of columns
+     * @param value   The value
+     */
+    public Matrix(int rows, int columns, double value) {
+        this(rows, columns);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                this.matrix[i][j] = BigDecimal.valueOf(value);
+            }
+        }
+    }
+
+    /**
+     * Creates a square matrix with the given side length
+     *
+     * @param length The side length
+     */
+    public Matrix(int length) {
+        this(length, length);
+    }
+
+    /**
+     * Creates a matrix with the given size
+     *
+     * @param size The size as a two-element int array -> [rows, columns]
+     */
+    public Matrix(int[] size) {
+        this(size[0], size[1]);
+    }
+
+    //================================================================================================================//
+    //                                          Static Constructors
+    //================================================================================================================//
+
+    /**
+     * Creates an identity matrix of the given size
+     *
+     * @param n The size
+     * @return A new NxN identity matrix
+     */
+    public static Matrix identity(int n) {
+        Matrix matrix = new Matrix(n, n);
+        for (int i = 0; i < n; i++) {
+            matrix.matrix[i][i] = new BigDecimal(1);
+        }
+        return matrix;
+    }
+
+    //================================================================================================================//
+    //                                       Matrix Manipulation Methods
+    //================================================================================================================//
+
+    /**
+     * Calculates the scaled matrix -- multiples each value in the matrix by the given value
+     *
+     * @param value The value
+     * @return The matrix scaled by the given value
+     */
+    public Matrix scale(double value) {
+
+        BigDecimal bdValue = new BigDecimal(value);
+        Matrix matrix = new Matrix(this.size());
+        for (int i = 0; i < matrix.matrix.length; i++) {
+            for (int j = 0; j < matrix.matrix[i].length; j++) {
+                matrix.matrix[i][j] = this.matrix[i][j].multiply(bdValue);
+            }
+        }
+        return matrix;
+    }
+
+    /**
+     * Adds two matrices, and returns a new matrix.
+     * Matrices must be of the same size
+     *
+     * @param other The other matrix to add
+     * @return The new summed matrix
+     */
+    public Matrix add(Matrix other) {
+        if (!Arrays.equals(this.size(), other.size())) {
+            throw new IllegalArgumentException("Cannot add matrices of different sizes");
+        }
+
+        Matrix matrix = new Matrix(this.size());
+        for (int i = 0; i < matrix.matrix.length; i++) {
+            for (int j = 0; j < matrix.matrix[i].length; j++) {
+                matrix.matrix[i][j] = this.matrix[i][j].add(other.matrix[i][j]);
+            }
+        }
+        return matrix;
+    }
+
+    /**
+     * Subtracts two matrices, and returns a new matrix.
+     * Matrices must be of the same size
+     *
+     * @param other The other matrix
+     * @return The new matrix with the subtracted values
+     */
+    public Matrix subtract(Matrix other) {
+        if (!Arrays.equals(this.size(), other.size())) {
+            throw new IllegalArgumentException("Cannot subtract matrices of different sizes");
+        }
+
+        Matrix matrix = new Matrix(this.size());
+        for (int i = 0; i < matrix.matrix.length; i++) {
+            for (int j = 0; j < matrix.matrix[i].length; j++) {
+                matrix.matrix[i][j] = this.matrix[i][j].subtract(other.matrix[i][j]);
+            }
+        }
+        return matrix;
+    }
+
+    public Matrix multiply(Matrix other) {
+        if (this.columns() != other.rows()) {
+            throw new IllegalArgumentException("Cannot multiply matrices of non compatible sizes\n" +
+                    "Expected other matrix to have " + this.columns() + " rows\n");
+        }
+
+        Matrix matrix = new Matrix(this.rows(), other.columns());
+        for (int i = 0; i < matrix.rows(); i++) {
+            for (int j = 0; j < matrix.columns(); j++) {
+                BigDecimal value = new BigDecimal(0);
+                for (int k = 0; k < this.columns(); k++) {
+                    value = value.add(this.matrix[i][k].multiply(other.matrix[k][j]));
+                }
+                matrix.matrix[i][j] = value;
+            }
+        }
+        return matrix;
+    }
+
+    public Matrix transpose() {
+        Matrix matrix = new Matrix(this.columns(), this.rows());
+        for (int i = 0; i < matrix.rows(); i++) {
+            for (int j = 0; j < matrix.columns(); j++) {
+                matrix.matrix[i][j] = this.matrix[j][i];
+            }
+        }
+        return matrix;
+    }
+
+    /**
+     * Reduces the matrix into row echelon form.
+     * Preforms the same operations onto the other matrix
+     *
+     * @param otherMatrix The other matrix to perform the operations upon
+     * @return The reduced matrix and the other matrix
+     */
+    public Matrix[] reduce(Matrix otherMatrix) {
+
+        // Make a copy of the matrix to perform the operations on
+        Matrix matrix = this.copy();
+
+        // Make a copy of the other matrix, if there is one
+        Matrix other = otherMatrix != null ? otherMatrix.copy() : new Matrix(this.rows(), 1);
+
+        if (this.rows() != other.rows()) {
+            throw new IllegalArgumentException("Cannot reduce matrices of different row sizes");
+        }
+
+//        System.out.println("Swapping rows...");
+        // get a non-zero along the main diagonal
+        for (int i = 0; i < matrix.rows(); i++) {
+            if (matrix.matrix[i][i].doubleValue() == 0) {
+//                System.out.print("0!!!  ");
+                for (int j = i + 1; j < matrix.rows(); j++) {
+                    if (matrix.matrix[i][j].doubleValue() != 0) {
+//                        System.out.println("R" + (i + 1) + " <---> R" + (j + 1));
+                        matrix.swapRows(i, j);
+                        other.swapRows(i, j);
+                        break;
+                    }
+                }
+            }
+        }
+
+
+//        System.out.println("Reducing...");
+        for (int rowA = 0; rowA < matrix.columns() - 1; rowA++) {
+            for (int rowB = rowA + 1; rowB < matrix.rows(); rowB++) {
+                BigDecimal multValue = matrix.matrix[rowB][rowA]
+                        .divide(matrix.matrix[rowA][rowA], decimalCount, roundingMode)
+                        .multiply(new BigDecimal(-1));
+                matrix.addRows(rowB, rowA, multValue);
+                other.addRows(rowB, rowA, multValue);
+
+//                System.out.println("R" + (rowB + 1) + " + " + multValue.stripTrailingZeros() + " * R" + (rowA + 1));
+//                matrix.stripTrailingZeros();
+//                System.out.println(matrix.toString());
+            }
+        }
+//        matrix.stripTrailingZeros();
+//        System.out.println(matrix.toString());
+//        System.out.println("Normalizing...");
+        for (int i = 0; i < matrix.rows(); i++) {
+            BigDecimal multValue = BigDecimal.ONE
+                    .divide(matrix.matrix[i][i], decimalCount, roundingMode);
+//            System.out.println("R" + (i + 1) + " * " + multValue.stripTrailingZeros());
+            matrix.multiplyRow(i, multValue);
+            other.multiplyRow(i, multValue);
+            matrix.set(i, i, 1);
+        }
+
+        matrix.stripTrailingZeros();
+        other.stripTrailingZeros();
+
+        return new Matrix[]{matrix, otherMatrix != null ? other : null};
+    }
+
+    public Matrix[] reducedRowEchelonForm(Matrix otherMatrix) {
+        // Make a copy of the matrix to perform the operations on
+        Matrix matrix = this.copy();
+
+        // Make a copy of the other matrix, if there is one
+        Matrix other = otherMatrix != null ? otherMatrix.copy() : new Matrix(this.rows(), 1);
+
+        if (this.rows() != other.rows()) {
+            throw new IllegalArgumentException("Cannot reduce matrices of different row sizes");
+        }
+
+        Matrix[] reduced = matrix.reduce(other);
+        matrix = reduced[0];
+        other = reduced[1];
+
+        for (int rowA = matrix.rows() - 1; rowA >= 0; rowA--) {
+            for (int rowB = rowA - 1; rowB >= 0; rowB--) {
+                BigDecimal multValue = matrix.matrix[rowB][rowA].multiply(new BigDecimal(-1));
+                matrix.addRows(rowB, rowA, multValue);
+                other.addRows(rowB, rowA, multValue);
+            }
+        }
+
+        matrix.stripTrailingZeros();
+        other.stripTrailingZeros();
+
+        return new Matrix[]{matrix, otherMatrix != null ? other : null};
+    }
+    //================================================================================================================//
+    //                                     Elementary Row Operations
+    //================================================================================================================//
+
+    /**
+     * Swaps two rows in the matrix
+     *
+     * @param row1 First row
+     * @param row2 Second row
+     */
+    private void swapRows(int row1, int row2) {
+        BigDecimal[] temp = this.matrix[row1];
+        this.matrix[row1] = this.matrix[row2];
+        this.matrix[row2] = temp;
+    }
+
+    /**
+     * Multiplies a row by a value.
+     * Values must not be 0
+     *
+     * @param row   Row to be multiplied
+     * @param value Value to multiply by
+     */
+    private void multiplyRow(int row, BigDecimal value) {
+        if (value.doubleValue() == 0) {
+            throw new IllegalArgumentException("Cannot multiply row by 0");
+        }
+        for (int i = 0; i < matrix[row].length; i++) {
+            matrix[row][i] = matrix[row][i].multiply(value);
+        }
+    }
+
+    private void multiplyRow(int row, double value) {
+        if (value == 0) {
+            throw new IllegalArgumentException("Cannot multiply row by 0");
+        }
+        this.multiplyRow(row, new BigDecimal(value));
+    }
+
+
+    /**
+     * Adds a row to the multiple of another row.
+     * Value can technically be 0, but it does nothing
+     *
+     * @param rowA  First row
+     * @param rowB  Second row
+     * @param value Value
+     */
+    private void addRows(int rowA, int rowB, BigDecimal value) {
+        for (int col = 0; col < matrix[rowA].length; col++) {
+            matrix[rowA][col] = matrix[rowA][col].add(matrix[rowB][col].multiply(value));
+        }
+    }
+
+    private void addRows(int row1, int row2, double value) {
+        this.addRows(row1, row2, new BigDecimal(value));
+    }
+
+    //================================================================================================================//
+    //                                       Matrix Access Methods
+    //================================================================================================================//
+
+    /**
+     * Returns the value at the given row and column
+     *
+     * @param row    The row
+     * @param column The column
+     * @return The value
+     */
+    public double get(int row, int column) {
+        return matrix[row][column].doubleValue();
+    }
+
+    /**
+     * Sets the value at the given row and column
+     *
+     * @param row    The row
+     * @param column The column
+     * @param value  The value
+     */
+    public void set(int row, int column, double value) {
+        matrix[row][column] = new BigDecimal(value);
+    }
+
+    /**
+     * Returns the number of rows
+     *
+     * @return The number of rows
+     */
+    public int rows() {
+        return matrix.length;
+    }
+
+    /**
+     * Returns the number of columns
+     *
+     * @return The number of columns
+     */
+    public int columns() {
+        return matrix[0].length;
+    }
+
+    /**
+     * Returns the size of the matrix
+     *
+     * @return The size as a two-element int array -> [rows, columns]
+     */
+    public int[] size() {
+        return new int[]{matrix.length, matrix[0].length};
+    }
+
+    //================================================================================================================//
+    //                                           Utility Methods
+    //================================================================================================================//
+
+    @Override
+    public String toString() {
+//        return Arrays.deepToString(matrix);
+
+        // Convert values to strings -- find the longest length of all strings
+        String[][] matrix = new String[this.rows()][this.columns()];
+        int[] columnLongest = new int[this.rows()];
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                matrix[i][j] = String.valueOf(this.matrix[i][j]);
+                if (matrix[i][j].length() > columnLongest[j]) {
+                    columnLongest[j] = matrix[i][j].length();
+                }
+            }
+        }
+
+        // Pad the strings -- make them all the same length
+        // Then append the strings to a single string
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                matrix[i][j] = String.format("%" + columnLongest[j] + "s", matrix[i][j]);
+            }
+            builder.append(Arrays.toString(matrix[i])).append("\n");
+        }
+
+        return builder.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Matrix matrix = (Matrix) o;
+        return Arrays.deepEquals(this.matrix, matrix.matrix);
+    }
+
+    public Matrix copy() {
+        return new Matrix(this.matrix);
+    }
+
+    public static Matrix copy(Matrix matrix) {
+        if (matrix == null) {
+            return null;
+        }
+        return new Matrix(matrix.matrix);
+    }
+
+    private void stripTrailingZeros() {
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                matrix[i][j] = matrix[i][j].stripTrailingZeros();
+            }
+        }
+    }
+    //================================================================================================================//
+    //                                                      Testing
+    //================================================================================================================//
+
+    public static void main(String[] args) {
+        Matrix matrix1, matrix2;
+        Matrix[] result;
+
+        matrix1 = new Matrix(
+                new double[][]{
+                        {1, -1, -1},
+                        {2, -1, -1},
+                        {2, 2, 1}
+                }
+        );
+        matrix2 = new Matrix(
+                new double[][]{
+                        {4, 5, -2}
+                }
+        ).transpose();
+
+        result = matrix1.reduce(matrix2);
+        System.out.println("Reduce:\n" + result[0] + "==========\n" + result[1]);
+        result = matrix1.reducedRowEchelonForm(matrix2);
+        System.out.println("Reduced Row Echelon Form:\n" + result[0] + "==========\n" + result[1]);
+
+    }
+}
