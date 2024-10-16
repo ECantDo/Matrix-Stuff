@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 public class Matrix {
     private final BigDecimal[][] matrix;
+    private BigDecimal[][] inverseMatrix;
 
     private static final int decimalCount = 32;
     private static final RoundingMode roundingMode = RoundingMode.HALF_UP;
@@ -293,6 +294,11 @@ public class Matrix {
 
         return new Matrix[]{matrix, otherMatrix != null ? other : null};
     }
+
+    public Matrix inverse() {
+
+        return this.reducedRowEchelonForm(Matrix.identity(this.rows()))[1];
+    }
     //================================================================================================================//
     //                                     Elementary Row Operations
     //================================================================================================================//
@@ -395,6 +401,10 @@ public class Matrix {
         return matrix[0].length;
     }
 
+    //================================================================================================================//
+    //                                      Getters and Setters (MISC)
+    //================================================================================================================//
+
     /**
      * Returns the size of the matrix
      *
@@ -404,6 +414,34 @@ public class Matrix {
         return new int[]{matrix.length, matrix[0].length};
     }
 
+    /**
+     * Checks if the matrix is square; i.e. has the same number of rows and columns
+     *
+     * @return True if the matrix is square
+     */
+    public boolean isSquare() {
+        return matrix.length == matrix[0].length;
+    }
+
+    /**
+     * Checks if the matrix is symmetric; i.e. if the matrix is equal to its transpose,
+     * or looks the same after a transpose
+     *
+     * @return True if the matrix is symmetric
+     */
+    public boolean isSymmetric() {
+        if (!this.isSquare()) {
+            return false;
+        }
+        return this.transpose().equals(this);
+    }
+
+    public boolean isSkewSymmetric() {
+        if (!this.isSquare()) {
+            return false;
+        }
+        return this.transpose().scale(-1).equals(this);
+    }
     //================================================================================================================//
     //                                           Utility Methods
     //================================================================================================================//
