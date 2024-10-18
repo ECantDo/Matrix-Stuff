@@ -201,7 +201,7 @@ public class Matrix {
     public void round() {
         for (int i = 0; i < this.matrix.length; i++) {
             for (int j = 0; j < this.matrix[i].length; j++) {
-                this.matrix[i][j] = this.matrix[i][j].setScale(decimalCount - 1, RoundingMode.HALF_UP);
+                this.matrix[i][j] = this.matrix[i][j].setScale(decimalCount - 2, RoundingMode.HALF_UP);
             }
         }
     }
@@ -353,23 +353,7 @@ public class Matrix {
         return this.reducedRowEchelonForm(Matrix.identity(this.rows()))[1];
     }
 
-    public Matrix exchangeColumn(int columnNumber, Matrix otherMatrix) {
-        if (columnNumber < 0 || columnNumber >= this.columns()) {
-            throw new IllegalArgumentException("Invalid column number");
-        }
-        if (otherMatrix == null) {
-            throw new IllegalArgumentException("No other matrix provided");
-        }
-        if (otherMatrix.columns() != 1) {
-            throw new IllegalArgumentException("Other matrix must be a column vector");
-        }
-        Matrix matrix = this.copy();
 
-        for (int i = 0; i < matrix.rows(); i++) {
-            matrix.matrix[i][columnNumber] = otherMatrix.matrix[i][0];
-        }
-        return matrix;
-    }
     //================================================================================================================//
     //                                     Elementary Row Operations
     //================================================================================================================//
@@ -512,6 +496,24 @@ public class Matrix {
             return false;
         }
         return this.transpose().scale(-1).equals(this);
+    }
+
+    public Matrix exchangeColumn(int columnNumber, Matrix otherMatrix) {
+        if (columnNumber < 0 || columnNumber >= this.columns()) {
+            throw new IllegalArgumentException("Invalid column number");
+        }
+        if (otherMatrix == null) {
+            throw new IllegalArgumentException("No other matrix provided");
+        }
+        if (otherMatrix.columns() != 1) {
+            throw new IllegalArgumentException("Other matrix must be a column vector");
+        }
+        Matrix matrix = this.copy();
+
+        for (int i = 0; i < matrix.rows(); i++) {
+            matrix.matrix[i][columnNumber] = otherMatrix.matrix[i][0];
+        }
+        return matrix;
     }
     //================================================================================================================//
     //                                           Utility Methods
