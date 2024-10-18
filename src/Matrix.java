@@ -198,6 +198,14 @@ public class Matrix {
         return matrix;
     }
 
+    public void round() {
+        for (int i = 0; i < this.matrix.length; i++) {
+            for (int j = 0; j < this.matrix[i].length; j++) {
+                this.matrix[i][j] = this.matrix[i][j].setScale(decimalCount - 1, RoundingMode.HALF_UP);
+            }
+        }
+    }
+
     /**
      * Reduces the matrix into row echelon form.
      * Preforms the same operations onto the other matrix
@@ -217,14 +225,11 @@ public class Matrix {
             throw new IllegalArgumentException("Cannot reduce matrices of different row sizes");
         }
 
-//        System.out.println("Swapping rows...");
         // get a non-zero along the main diagonal
         for (int i = 0; i < matrix.rows(); i++) {
             if (matrix.matrix[i][i].doubleValue() == 0) {
-//                System.out.print("0!!!  ");
                 for (int j = i + 1; j < matrix.rows(); j++) {
                     if (matrix.matrix[i][j].doubleValue() != 0) {
-//                        System.out.println("R" + (i + 1) + " <---> R" + (j + 1));
                         matrix.swapRows(i, j);
                         other.swapRows(i, j);
                         break;
@@ -242,22 +247,14 @@ public class Matrix {
                         .multiply(new BigDecimal(-1));
                 matrix.addRows(rowB, rowA, multValue);
                 other.addRows(rowB, rowA, multValue);
-
-//                System.out.println("R" + (rowB + 1) + " + " + multValue.stripTrailingZeros() + " * R" + (rowA + 1));
-//                matrix.stripTrailingZeros();
-//                System.out.println(matrix.toString());
             }
         }
-//        matrix.stripTrailingZeros();
-//        System.out.println(matrix.toString());
-//        System.out.println("Normalizing...");
+
         for (int i = 0; i < matrix.rows(); i++) {
             BigDecimal multValue = BigDecimal.ONE
                     .divide(matrix.matrix[i][i], decimalCount, roundingMode);
-//            System.out.println("R" + (i + 1) + " * " + multValue.stripTrailingZeros());
             matrix.multiplyRow(i, multValue);
             other.multiplyRow(i, multValue);
-            matrix.set(i, i, 1);
         }
 
         matrix.stripTrailingZeros();
@@ -289,15 +286,89 @@ public class Matrix {
             }
         }
 
+        matrix.round();
+        other.round();
         matrix.stripTrailingZeros();
         other.stripTrailingZeros();
-
         return new Matrix[]{matrix, otherMatrix != null ? other : null};
     }
 
-    public Matrix inverse() {
+    /**
+     * Returns the determinant of the matrix
+     *
+     * @return The determinant (BigDecimal)
+     */
+    public BigDecimal determinant() {
+        if (!this.isSquare()) {
+            throw new IllegalArgumentException("Determinant is only defined for square matrices");
+        }
 
+        // Copy the matrix because we don't want to modify the original matrix
+        Matrix matrix = this.copy();
+        BigDecimal det = BigDecimal.ONE;
+        int swaps = 0;
+
+        // Perform Gaussian elimination to transform the matrix into an upper triangular matrix
+        for (int i = 0; i < matrix.rows(); i++) {
+            // If the diagonal element is zero, we need to swap with a lower row
+            if (matrix.matrix[i][i].compareTo(BigDecimal.ZERO) == 0) {
+                boolean swapped = false;
+                for (int j = i + 1; j < matrix.rows(); j++) {
+                    if (matrix.matrix[j][i].compareTo(BigDecimal.ZERO) != 0) {
+                        matrix.swapRows(i, j);
+                        swaps++;
+                        swapped = true;
+                        break;
+                    }
+                }
+                if (!swapped) {
+                    // If no non-zero pivot is found, the determinant is zero
+                    return BigDecimal.ZERO;
+                }
+            }
+
+            // Now perform row reduction
+            for (int j = i + 1; j < matrix.rows(); j++) {
+                if (matrix.matrix[j][i].compareTo(BigDecimal.ZERO) != 0) {
+                    BigDecimal factor = matrix.matrix[j][i].divide(matrix.matrix[i][i], decimalCount, roundingMode);
+                    matrix.addRows(j, i, factor.negate());
+                }
+            }
+        }
+
+        // The determinant is the product of the diagonal elements
+        for (int i = 0; i < matrix.rows(); i++) {
+            det = det.multiply(matrix.matrix[i][i]);
+        }
+
+        // Account for row swaps (each swap flips the sign of the determinant)
+        if (swaps % 2 != 0) {
+            det = det.negate();
+        }
+
+        return det.setScale(decimalCount - 2, roundingMode).stripTrailingZeros();
+    }
+
+    public Matrix inverse() {
         return this.reducedRowEchelonForm(Matrix.identity(this.rows()))[1];
+    }
+
+    public Matrix exchangeColumn(int columnNumber, Matrix otherMatrix) {
+        if (columnNumber < 0 || columnNumber >= this.columns()) {
+            throw new IllegalArgumentException("Invalid column number");
+        }
+        if (otherMatrix == null) {
+            throw new IllegalArgumentException("No other matrix provided");
+        }
+        if (otherMatrix.columns() != 1) {
+            throw new IllegalArgumentException("Other matrix must be a column vector");
+        }
+        Matrix matrix = this.copy();
+
+        for (int i = 0; i < matrix.rows(); i++) {
+            matrix.matrix[i][columnNumber] = otherMatrix.matrix[i][0];
+        }
+        return matrix;
     }
     //================================================================================================================//
     //                                     Elementary Row Operations
