@@ -349,8 +349,54 @@ public class Matrix {
         return det.setScale(decimalCount - 2, roundingMode).stripTrailingZeros();
     }
 
+    /**
+     * Gets the minor of a matrix at a given row and column
+     * M(row, column) = determinant(matrix.removeRow(row).removeColumn(column))
+     *
+     * @param row    Row to remove
+     * @param column Column to remove
+     * @return The minor
+     */
     public BigDecimal minor(int row, int column) {
         return this.removeRow(row).removeColumn(column).determinant();
+    }
+
+    /**
+     * Gets the cofactor of a matrix at a given row and column
+     * C(row, column) = (-1)^(row + column) * M(row, column)
+     *
+     * @param row    Row to remove
+     * @param column Column to remove
+     * @return The cofactor
+     */
+    public BigDecimal cofactor(int row, int column) {
+        return this.minor(row, column).multiply(new BigDecimal((row + column) % 2 == 0 ? 1 : -1));
+    }
+
+    /**
+     * Returns the matrix of cofactors
+     * C(row, column) = (-1)^(row + column) * M(row, column)
+     *
+     * @return The cofactor matrix
+     */
+    public Matrix cofactor() {
+        Matrix matrix = new Matrix(this.rows(), this.columns());
+        for (int i = 0; i < matrix.rows(); i++) {
+            for (int j = 0; j < matrix.columns(); j++) {
+                matrix.matrix[i][j] = this.cofactor(i, j);
+            }
+        }
+        return matrix;
+    }
+
+    /**
+     * Returns the adjugate matrix;
+     * Transpose the cofactor matrix
+     *
+     * @return The adjugate matrix
+     */
+    public Matrix adjugate() {
+        return this.cofactor().transpose();
     }
 
     public Matrix inverse() {
