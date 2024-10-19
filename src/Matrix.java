@@ -349,6 +349,10 @@ public class Matrix {
         return det.setScale(decimalCount - 2, roundingMode).stripTrailingZeros();
     }
 
+    public BigDecimal minor(int row, int column) {
+        return this.removeRow(row).removeColumn(column).determinant();
+    }
+
     public Matrix inverse() {
         return this.reducedRowEchelonForm(Matrix.identity(this.rows()))[1];
     }
@@ -515,6 +519,33 @@ public class Matrix {
         }
         return matrix;
     }
+
+    /**
+     * Removes a given row number from the matrix
+     *
+     * @param rowNumber The row number
+     * @return The new matrix without the row
+     */
+    public Matrix removeRow(int rowNumber) {
+        if (rowNumber < 0 || rowNumber >= this.rows()) {
+            throw new IllegalArgumentException("Invalid row number");
+        }
+        Matrix matrix = new Matrix(this.rows() - 1, this.columns());
+        for (int i = 0; i < rowNumber; i++) {
+            System.arraycopy(this.matrix[i], 0, matrix.matrix[i], 0, this.columns());
+        }
+        for (int i = rowNumber + 1; i < this.rows(); i++) {
+            System.arraycopy(this.matrix[i], 0, matrix.matrix[i - 1], 0, this.columns());
+        }
+        return matrix;
+    }
+
+    public Matrix removeColumn(int columnNumber) {
+        if (columnNumber < 0 || columnNumber >= this.columns()) {
+            throw new IllegalArgumentException("Invalid column number");
+        }
+        return this.transpose().removeRow(columnNumber).transpose();
+    }
     //================================================================================================================//
     //                                           Utility Methods
     //================================================================================================================//
@@ -524,13 +555,13 @@ public class Matrix {
 //        return Arrays.deepToString(matrix);
 
         // Convert values to strings -- find the longest length of all strings
-        String[][] matrix = new String[this.rows()][this.columns()];
-        int[] columnLongest = new int[this.rows()];
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[i].length; j++) {
-                matrix[i][j] = String.valueOf(this.matrix[i][j]);
-                if (matrix[i][j].length() > columnLongest[j]) {
-                    columnLongest[j] = matrix[i][j].length();
+        String[][] stringMatrix = new String[this.rows()][this.columns()];
+        int[] columnLongest = new int[this.columns()];
+        for (int i = 0; i < this.rows(); i++) {
+            for (int j = 0; j < this.columns(); j++) {
+                stringMatrix[i][j] = String.valueOf(this.matrix[i][j]);
+                if (stringMatrix[i][j].length() > columnLongest[j]) {
+                    columnLongest[j] = stringMatrix[i][j].length();
                 }
             }
         }
@@ -538,11 +569,11 @@ public class Matrix {
         // Pad the strings -- make them all the same length
         // Then append the strings to a single string
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[i].length; j++) {
-                matrix[i][j] = String.format("%" + columnLongest[j] + "s", matrix[i][j]);
+        for (int i = 0; i < stringMatrix.length; i++) {
+            for (int j = 0; j < stringMatrix[i].length; j++) {
+                stringMatrix[i][j] = String.format("%" + columnLongest[j] + "s", stringMatrix[i][j]);
             }
-            builder.append(Arrays.toString(matrix[i])).append("\n");
+            builder.append(Arrays.toString(stringMatrix[i])).append("\n");
         }
 
         return builder.toString();
@@ -598,6 +629,10 @@ public class Matrix {
         System.out.println("Reduce:\n" + result[0] + "==========\n" + result[1]);
         result = matrix1.reducedRowEchelonForm(matrix2);
         System.out.println("Reduced Row Echelon Form:\n" + result[0] + "==========\n" + result[1]);
+
+        System.out.println(matrix1.removeColumn(1));
+        System.out.println(matrix1);
+        System.out.println(matrix1.removeRow(1));
 
     }
 }
