@@ -1,13 +1,8 @@
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Arrays;
 
 public class Matrix {
 	private final BigFraction[][] matrix;
 	private BigFraction[][] inverseMatrix;
-
-	private static final int decimalCount = 32;
-	private static final RoundingMode roundingMode = RoundingMode.HALF_UP;
 
 	//================================================================================================================//
 	//                                              Constructors
@@ -205,7 +200,7 @@ public class Matrix {
 	/**
 	 * Rounding now reduces the fraction
 	 */
-	public void round() {
+	public void simplify() {
 		for (int i = 0; i < this.matrix.length; i++) {
 			for (int j = 0; j < this.matrix[i].length; j++) {
 				this.matrix[i][j] = this.matrix[i][j].reduce();
@@ -236,7 +231,7 @@ public class Matrix {
 		for (int i = 0; i < matrix.rows(); i++) {
 			if (matrix.matrix[i][i].equals(BigFraction.ZERO)) {
 				for (int j = i + 1; j < matrix.rows(); j++) {
-					if (!matrix.matrix[i][j].equals(BigFraction.ZERO)) {
+					if (!matrix.matrix[j][i].equals(BigFraction.ZERO)) {
 						matrix.swapRows(i, j);
 						other.swapRows(i, j);
 						break;
@@ -290,8 +285,8 @@ public class Matrix {
 			}
 		}
 
-		matrix.round();
-		other.round();
+		matrix.simplify();
+		other.simplify();
 
 		return new Matrix[]{matrix, otherMatrix != null ? other : null};
 	}
@@ -435,7 +430,7 @@ public class Matrix {
 	 * @param value Value to multiply by
 	 */
 	private void multiplyRow(int row, BigFraction value) {
-		if (value.doubleValue() == 0) {
+		if (value.equals(BigFraction.ZERO)) {
 			throw new IllegalArgumentException("Cannot multiply row by 0");
 		}
 		for (int i = 0; i < matrix[row].length; i++) {
@@ -480,8 +475,8 @@ public class Matrix {
 	 * @param column The column
 	 * @return The value
 	 */
-	public double get(int row, int column) {
-		return matrix[row][column].doubleValue();
+	public BigFraction get(int row, int column) {
+		return matrix[row][column].reduce();
 	}
 
 	/**

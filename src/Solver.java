@@ -8,7 +8,7 @@ public class Solver {
 	 * @return Each index is the x^n constant value for each x that has a solution up to the maximum x^n.
 	 * Returns null if the input is incorrect, or it cannot be solved.
 	 */
-	public static double[] findPolynomial(double[][] inputs) {
+	public static BigFraction[] findPolynomial(double[][] inputs) {
 
 		Matrix vandermondeMatrix = new Matrix(inputs.length);
 		Matrix yMatrix = new Matrix(inputs.length, 1);
@@ -26,7 +26,7 @@ public class Solver {
 
 		Matrix[] solution = vandermondeMatrix.reducedRowEchelonForm(yMatrix);
 
-		double[] result = new double[yMatrix.rows()];
+		BigFraction[] result = new BigFraction[yMatrix.rows()];
 		for (int i = 0; i < result.length; i++) {
 			result[i] = solution[1].get(i, 0);
 		}

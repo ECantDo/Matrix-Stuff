@@ -221,40 +221,57 @@ public class BigFraction {
 		this.numerator = count == 1 ? -this.numerator : this.numerator;
 	}
 
-	/**
-	 * Gets the fraction in the lowest terms. Returns a new fraction.
-	 *
-	 * @return A new {@link BigFraction}, with the same value, in the lowest terms.
-	 * For example a fraction of 10/5 would be reduced to 2/1; 4/10 would reduce to 2/5.
-	 */
-	public BigFraction reduce() {
-		long gcf = greatestCommonFactor(this.numerator, this.denominator);
-//        System.out.println(gcf);
-		BigFraction f = new BigFraction(this);
-		f.numerator /= gcf;
-		f.denominator /= gcf;
-		return f;
-	}
+/**
+ * Gets the fraction in the lowest terms. Returns a new fraction.
+ *
+ * @return A new {@link BigFraction}, with the same value, in the lowest terms.
+ * For example, 10/5 reduces to 2/1; 4/10 reduces to 2/5.
+ */
+public BigFraction reduce() {
+    if (numerator == 0) {
+        return new BigFraction(0, 1); // normalize 0/x
+    }
+
+    long g = greatestCommonFactor(numerator, denominator);
+    long newNum = numerator / g;
+    long newDen = denominator / g;
+
+    // normalize so denominator is always positive
+    if (newDen < 0) {
+        newNum = -newNum;
+        newDen = -newDen;
+    }
+
+    return new BigFraction(newNum, newDen);
+}
 
 	/**
 	 * Gets the fraction in the lowest terms.  Updates the values, for internal class use only.
 	 */
 	private void reduceFraction() {
-		long gcf = greatestCommonFactor(this.numerator, this.denominator);
-		this.numerator /= gcf;
-		this.denominator /= gcf;
+		if (numerator == 0) {
+			denominator = 1; // normalize 0/x
+			return;
+		}
+		long g = greatestCommonFactor(numerator, denominator);
+		numerator /= g;
+		denominator /= g;
+
+		if (denominator < 0) { // keep denominator positive
+			numerator = -numerator;
+			denominator = -denominator;
+		}
 	}
 
 	private static long greatestCommonFactor(long a, long b) {
-		long[] numerator_factors = primeFactorize(a);
-		long[] denominator_factors = primeFactorize(b);
-
-		long gcf = 1;
-
-		for (int i = 0; i < Math.min(numerator_factors.length, denominator_factors.length); i++) {
-			gcf *= (long) Math.pow(PRIMES.get(i), Math.min(numerator_factors[i], denominator_factors[i]));
+		a = Math.abs(a);
+		b = Math.abs(b);
+		while (b != 0) {
+			long temp = b;
+			b = a % b;
+			a = temp;
 		}
-		return gcf;
+		return a;
 	}
 
 	private static long[] primeFactorize(long number) {
@@ -360,7 +377,7 @@ public class BigFraction {
 		return out;
 	}
 
-	public double doubleValue(){
+	public double doubleValue() {
 		return this.toDouble();
 	}
 
