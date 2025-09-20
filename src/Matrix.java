@@ -105,6 +105,10 @@ public class Matrix {
         return matrix;
     }
 
+    public static Matrix ZERO(int width, int height) {
+        return new Matrix(width, height);
+    }
+
     //================================================================================================================//
     //                                       Matrix Manipulation Methods
     //================================================================================================================//
@@ -291,6 +295,10 @@ public class Matrix {
         matrix.stripTrailingZeros();
         other.stripTrailingZeros();
         return new Matrix[]{matrix, otherMatrix != null ? other : null};
+    }
+
+    public Matrix solve(Matrix other) {
+        return this.reducedRowEchelonForm(other)[1];
     }
 
     /**
@@ -485,7 +493,11 @@ public class Matrix {
      * @param value  The value
      */
     public void set(int row, int column, double value) {
-        matrix[row][column] = new BigDecimal(value);
+        this.set(row, column, new BigDecimal(value));
+    }
+
+    public void set(int row, int column, BigDecimal value) {
+        matrix[row][column] = value;
     }
 
     /**
