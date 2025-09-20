@@ -41,17 +41,77 @@ public class Main {
 //        // Keep this
 //        System.out.println(result);
 
-		double[][] input = new double[][]{
-				{0, 0},
-				{2, 2},
-				{7, 3},
-				{12, 4},
-				{20, 0}
+		BigFraction[][] input = new BigFraction[][]{
+				{new BigFraction(-3), new BigFraction(-33, 8)},
+				{new BigFraction(-1), new BigFraction(17, 8)},
+				{new BigFraction(0), new BigFraction(3)},
+				{new BigFraction(1), new BigFraction(27, 8)},
+				{new BigFraction(2), new BigFraction(4)},
+				{new BigFraction(3), new BigFraction(45, 8)},
+				{new BigFraction(4), new BigFraction(9)}
 		};
 
 		BigFraction[] output = Solver.findPolynomial(input);
 
 		System.out.println(Arrays.toString(output));
+		System.out.println(toDesmosLatex(output, "x", "g"));
+	}
+
+	public static String toDesmosLatex(BigFraction[] coeffs, String varName, String funcName) {
+		StringBuilder sb = new StringBuilder();
+
+		// Format function name with subscripts if longer than 1 char
+		sb.append(formatWithSubscript(funcName));
+		sb.append("\\left(").append(formatWithSubscript(varName)).append("\\right)=");
+
+		boolean first = true;
+		for (int i = 0; i < coeffs.length; i++) {
+			BigFraction c = coeffs[i];
+			if (c.equals(BigFraction.ZERO)) continue;
+
+			long num = c.numerator;
+			long den = c.denominator;
+
+			// Sign
+			if (!first) {
+				sb.append(num >= 0 ? "+" : "-");
+			}
+			first = false;
+
+			// Absolute value
+			num = Math.abs(num);
+
+			if (i == 0) {
+				// Constant term
+				if (den == 1) {
+					sb.append(num);
+				} else {
+					sb.append("\\frac{").append(num).append("}{").append(den).append("}");
+				}
+			} else {
+				// Coefficient
+				if (!(num == 1 && den == 1)) {
+					if (den == 1) {
+						sb.append(num);
+					} else {
+						sb.append("\\frac{").append(num).append("}{").append(den).append("}");
+					}
+				}
+				// Variable
+				sb.append(formatWithSubscript(varName));
+				if (i > 1) sb.append("^").append(i);
+			}
+		}
+		return sb.toString();
+	}
+
+	// Helper to turn names into "x_{rest}" form
+	private static String formatWithSubscript(String name) {
+		if (name.length() == 1) {
+			return name;
+		} else {
+			return name.charAt(0) + "_{" + name.substring(1) + "}";
+		}
 	}
 
 

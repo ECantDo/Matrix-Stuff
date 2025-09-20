@@ -241,22 +241,31 @@ public class Matrix {
 		}
 
 
-//        System.out.println("Reducing...");
+//		System.out.println("Reducing...");
+//		System.out.println(matrix);
 		for (int rowA = 0; rowA < matrix.columns() - 1; rowA++) {
 			for (int rowB = rowA + 1; rowB < matrix.rows(); rowB++) {
 				BigFraction multValue = matrix.matrix[rowB][rowA]
 						.divide(matrix.matrix[rowA][rowA])
-						.multiply(new BigFraction(-1));
+						.multiply(new BigFraction(-1)).reduce();
 				matrix.addRows(rowB, rowA, multValue);
 				other.addRows(rowB, rowA, multValue);
+				matrix.simplify();
+				other.simplify();
 			}
+//			System.out.println(matrix);
 		}
 
+//		System.out.println("Simplifying");
 		for (int i = 0; i < matrix.rows(); i++) {
 			BigFraction multValue = BigFraction.ONE
 					.divide(matrix.matrix[i][i]);
+//			BigFraction multValue = new BigFraction(1, matrix.matrix[i][i]);
 			matrix.multiplyRow(i, multValue);
 			other.multiplyRow(i, multValue);
+			matrix.simplify();
+			other.simplify();
+//			System.out.println(matrix);
 		}
 
 		return new Matrix[]{matrix, otherMatrix != null ? other : null};
@@ -279,9 +288,12 @@ public class Matrix {
 
 		for (int rowA = matrix.rows() - 1; rowA >= 0; rowA--) {
 			for (int rowB = rowA - 1; rowB >= 0; rowB--) {
-				BigFraction multValue = matrix.matrix[rowB][rowA].multiply(new BigFraction(-1));
+				BigFraction multValue = matrix.matrix[rowB][rowA].multiply(-1).reduce();
 				matrix.addRows(rowB, rowA, multValue);
 				other.addRows(rowB, rowA, multValue);
+
+				matrix.simplify();
+				other.simplify();
 			}
 		}
 
